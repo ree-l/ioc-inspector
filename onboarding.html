@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>IOC Inspector — Welcome</title>
+  <link rel="stylesheet" href="popup.css" />
+  <style>
+    body { width: 680px; margin: 0 auto; padding: 50px 24px 80px; }
+    .step-num {
+      display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent); color: var(--bg); text-align: center;
+      font-size: 11px; font-weight: 700; line-height: 22px; margin-right: 8px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    [data-theme="dark"] .step-num { color: #062017; }
+    .step {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 22px; margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .step h2 {
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px;
+      color: var(--text); margin-bottom: 6px; display: flex; align-items: center;
+    }
+    .step .desc { color: var(--text-muted); font-size: 12px; line-height: 1.7; margin-bottom: 14px; }
+    .step a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .step a:hover { text-decoration: underline; }
+
+    .source-grid { display: flex; flex-direction: column; gap: 6px; }
+    .source-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg-card); transition: all 0.15s; cursor: pointer;
+    }
+    .source-row.disabled { opacity: 0.55; background: var(--bg-input); }
+    .source-row:hover { border-color: var(--accent); }
+    .source-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .source-bar { width: 4px; height: 22px; border-radius: 2px; flex-shrink: 0; }
+    .source-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .source-name { font-weight: 600; font-size: 13px; color: var(--text); display: flex; gap: 6px; align-items: center; }
+    .source-name .badge {
+      font-size: 8px; padding: 1px 5px; border-radius: 3px;
+      background: var(--bg-input); color: var(--text-muted);
+      font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .source-tag {
+      font-size: 9px; color: var(--text-faint); letter-spacing: 0.06em;
+      text-transform: uppercase; font-weight: 600;
+    }
+    .source-tag .needs-key { color: var(--aip); }
+    .source-tag .free { color: var(--clean-text); }
+    .source-tag .manual { color: var(--talos); }
+
+    .toggle {
+      position: relative; width: 38px; height: 22px; flex-shrink: 0;
+      background: var(--border-strong); border-radius: 11px;
+      transition: background 0.2s;
+    }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; background: var(--bg-card); border-radius: 50%;
+      transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle.on { background: var(--accent); }
+    .toggle.on::after { left: 18px; }
+
+    .input-group { display: flex; gap: 8px; margin-top: 6px; }
+    .input-group input {
+      flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 12px; color: var(--text);
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
+      transition: all 0.15s; font-weight: 500;
+    }
+    .input-group input:focus { border-color: var(--accent); background: var(--bg-card); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .toggle-btn {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-muted); padding: 0 14px; cursor: pointer;
+      font-family: monospace; font-size: 10px; font-weight: 500;
+    }
+    .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .key-block { margin-top: 12px; }
+    .key-block label {
+      display: block; font-size: 11px; color: var(--text); font-weight: 600; margin-bottom: 4px;
+    }
+    .key-block .hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+    .actions {
+      display: flex; gap: 10px; justify-content: flex-end; padding-top: 8px;
+    }
+    .primary {
+      background: var(--accent); color: var(--bg); border: none; border-radius: 6px;
+      padding: 12px 24px; cursor: pointer; font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 0.1em;
+      transition: background 0.15s;
+    }
+    [data-theme="dark"] .primary { color: #062017; }
+    .primary:hover { background: var(--accent-hover); }
+    .secondary {
+      background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+      border-radius: 6px; padding: 12px 18px; cursor: pointer; font-family: 'JetBrains Mono', monospace;
+      font-weight: 600; font-size: 11px; letter-spacing: 0.05em;
+    }
+    .secondary:hover { color: var(--accent); border-color: var(--accent); }
+
+    .welcome-banner { text-align: center; margin-bottom: 32px; padding: 8px 0; }
+    .welcome-banner h1 {
+      font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800;
+      letter-spacing: -0.02em; line-height: 1.1; margin: 8px 0;
+    }
+    .welcome-banner .lead {
+      font-size: 13px; color: var(--text-muted); max-width: 520px; margin: 12px auto 0; line-height: 1.6;
+    }
+
+    .brand-footer {
+      text-align: center; margin-top: 32px;
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      letter-spacing: 0.18em; font-size: 11px; color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <button id="theme-toggle" class="theme-toggle" title="Toggle dark/light mode" style="top:24px;right:24px;"></button>
+
+  <div class="welcome-banner">
+    <div class="kicker">welcome</div>
+    <h1>IOC Inspector</h1>
+    <p class="lead">
+      A unified threat intelligence lookup tool. Query 6 sources via API in parallel — plus quick-link to 8 manual lookup sites.
+    </p>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">1</span>Choose your sources</h2>
+    <p class="desc">Toggle which sources to query. Manual lookups don't query an API — they just open the lookup page in a new tab.</p>
+    <div class="source-grid" id="source-grid"></div>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">2</span>Add your free API keys</h2>
+    <p class="desc">All keys are free. Skip any you don't want — those sources will be marked "no API key" in scans.</p>
+
+    <div class="key-block">
+      <label for="virustotal_key">VirusTotal API Key</label>
+      <div class="input-group">
+        <input type="password" id="virustotal_key" placeholder="paste here" autocomplete="off" />
+        <button class="toggle-btn" data-target="virustotal_key">show</button>
+      </div>
+      <div class="hint">4 reqs/min, 500/day. <a href="https://www.virustotal.com/gui/my-apikey" target="_blank">Get key →</a></div>
+    </div>
+
+    <div class="key-block">
+      <label for="abuseipdb_key">AbuseIPDB API Key <span style="color:var(--text-faint);font-weight:400">(IP only)</span></label>
+      <div class="input-group">
+        <input type="password" id="abuseipdb_key" placeholder="paste here" autocomplete="off" />
+        <button class="toggle-btn" data-target="abuseipdb_key">show</button>
+      </div>
+      <div class="hint">1,000 IP checks/day. <a href="https://www.abuseipdb.com/account/api" target="_blank">Get key →</a></div>
+    </div>
+
+    <div class="key-block">
+      <label for="abusech_key">abuse.ch Auth-Key <span style="color:var(--text-faint);font-weight:400">(ThreatFox + URLHaus)</span></label>
+      <div class="input-group">
+        <input type="password" id="abusech_key" placeholder="paste here" autocomplete="off" />
+        <button class="toggle-btn" data-target="abusech_key">show</button>
+      </div>
+      <div class="hint">One key works for both ThreatFox and URLHaus. <a href="https://auth.abuse.ch/" target="_blank">Register →</a></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">3</span>Done!</h2>
+    <p class="desc">
+      Pin the extension to your toolbar (puzzle icon → 📌) for quick access. You can also right-click any link or selected text on a page → "Inspect with IOC Inspector".
+    </p>
+    <div class="actions">
+      <button class="secondary" id="skip">SKIP FOR NOW</button>
+      <button class="primary" id="finish">SAVE & GET STARTED</button>
+    </div>
+  </div>
+
+  <div class="brand-footer">RYMANTECH</div>
+
+  <script src="onboarding.js"></script>
+</body>
+</html>

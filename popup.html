@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>IOC Inspector</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body class="popup-body">
+  <div class="container">
+    <button id="theme-toggle" class="theme-toggle" title="Toggle dark/light mode">
+      <!-- icon swapped via JS -->
+    </button>
+
+    <header>
+      <div class="kicker">threat intelligence</div>
+      <h1>IOC Inspector</h1>
+      <p class="subtitle" id="subtitle"></p>
+    </header>
+
+    <div class="search-card">
+      <div class="search-row">
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="indicator"
+            placeholder="enter URL, domain, or IP..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="copy-input-btn" class="icon-btn" title="Copy input" hidden></button>
+        </div>
+        <button id="scan-btn">SCAN</button>
+      </div>
+      <div class="search-meta">
+        <div class="type-hint" id="type-hint"></div>
+        <div class="meta-actions">
+          <button id="recents-btn" class="link-btn" title="Recent searches">recents ▾</button>
+          <button id="clear-btn" class="link-btn" title="Clear">clear</button>
+        </div>
+      </div>
+
+      <div id="recents-dropdown" class="recents-dropdown" hidden></div>
+    </div>
+
+    <div class="results-toolbar" id="results-toolbar" hidden>
+      <span class="results-meta" id="results-meta"></span>
+      <div class="toolbar-actions">
+        <button id="copy-btn" title="Copy report"></button>
+        <button id="open-manual-btn" title="Open all manual lookups in background tabs">OPEN&nbsp;ALL</button>
+        <button id="png-btn" title="Download as PNG">PNG</button>
+        <button id="pdf-btn" title="Download as PDF">PDF</button>
+      </div>
+    </div>
+
+    <div class="results" id="results"></div>
+
+    <footer>
+      <div class="footer-left">
+        <a href="#" id="open-options">⚙ settings</a>
+        <span class="footer-sep">·</span>
+        <span class="footer-text">v1.0</span>
+      </div>
+      <div class="footer-right">
+        <span class="brand">RYMANTECH</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
