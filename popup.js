@@ -65,6 +65,10 @@ const ICONS = {
 // ── Init ──────────────────────────────────────────────────────────────────
 $copyInputBtn.innerHTML = ICONS.copy;
 $copyBtn.innerHTML = ICONS.copy + '<span>COPY</span>';
+// Set theme icon immediately (defaults to moon = "go to dark"); applyTheme()
+// will update it once we read the stored preference.
+$themeBtn.innerHTML = ICONS.moon;
+$themeBtn.title = "Switch to dark mode";
 
 $options.addEventListener("click", (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
 $input.addEventListener("input", onInputChange);
@@ -414,7 +418,25 @@ function renderManual(card, svc, indicator, isIpAddr) {
   const $status = card.querySelector(".svc-status");
   const target = isIpAddr ? indicator : indicator.replace(/^https?:\/\//, "").split("/")[0];
   const link = manualLinkFor(svc.key, target, isIpAddr);
-  $status.innerHTML = `<a class="manual-link" href="${escapeHtml(link)}" target="_blank" rel="noreferrer">open ↗</a>`;
+  const pasteNeeded = needsManualPaste(svc.key, isIpAddr);
+
+  if (pasteNeeded) {
+    $status.innerHTML = `<a class="manual-link manual-link-paste" href="${escapeHtml(link)}" target="_blank" rel="noreferrer" title="Indicator copied to clipboard — paste it once the page loads">open + copy ↗</a>`;
+    $status.querySelector("a").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(target); } catch {}
+    });
+  } else {
+    $status.innerHTML = `<a class="manual-link" href="${escapeHtml(link)}" target="_blank" rel="noreferrer">open ↗</a>`;
+  }
+}
+
+// Some sites don't support URL-parameter deeplinking (their search uses POST
+// forms). For those, we copy the indicator to clipboard so the user can just
+// paste it once the page loads.
+function needsManualPaste(key, isIpAddr) {
+  // IPVoid's IP blacklist check uses a POST form — query params are ignored.
+  if (key === "ipvoid" && isIpAddr) return true;
+  return false;
 }
 
 function manualLinkFor(key, target, isIpAddr) {
@@ -423,8 +445,8 @@ function manualLinkFor(key, target, isIpAddr) {
       return `https://talosintelligence.com/reputation_center/lookup?search=${encodeURIComponent(target)}`;
     case "ipvoid":
       return isIpAddr
-        ? `https://www.ipvoid.com/ip-blacklist-check/?ip=${encodeURIComponent(target)}`
-        : `https://www.urlvoid.com/scan/${encodeURIComponent(target)}`;
+        ? `https://www.ipvoid.com/ip-blacklist-check/`
+        : `https://www.urlvoid.com/scan/${encodeURIComponent(target)}/`;
     case "mxtool":
       return isIpAddr
         ? `https://mxtoolbox.com/SuperTool.aspx?action=blacklist%3a${encodeURIComponent(target)}&run=toolpage`
@@ -499,9 +521,16 @@ async function openAllManual() {
   const manualSvcs = SERVICES.filter(s => s.type === "manual" && (!s.ipOnly || ip));
   if (manualSvcs.length === 0) return;
 
+  // If any paste-needed source is included, copy the indicator to clipboard
+  // so the user can paste it into those forms after they load.
+  const anyPasteNeeded = manualSvcs.some(s => needsManualPaste(s.key, ip));
+  if (anyPasteNeeded) {
+    try { await navigator.clipboard.writeText(target); } catch {}
+  }
+
   for (const svc of manualSvcs) {
     const url = manualLinkFor(svc.key, target, ip);
-    chrome.tabs.create({ url, active: false }); // background tab
+    chrome.tabs.create({ url, active: false });
   }
   flashButton($openManualBtn, `✓ ${manualSvcs.length} TABS`);
 }

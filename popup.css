@@ -139,11 +139,14 @@ body.popup-body {
 /* ── Theme toggle button (top-right) ────────────────────────────────────── */
 .theme-toggle {
   position: absolute; top: 12px; right: 14px;
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 1px solid var(--border);
-  border-radius: 6px; padding: 4px 8px; cursor: pointer;
-  color: var(--text-muted); font-size: 12px;
-  transition: all 0.15s; line-height: 1;
+  border-radius: 6px; padding: 0; cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s; line-height: 0;
 }
+.theme-toggle svg { width: 14px; height: 14px; }
 .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
@@ -405,6 +408,10 @@ header h1 {
 }
 .manual-link:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 [data-theme="dark"] .manual-link:hover { color: #062017; }
+.manual-link-paste {
+  border-color: var(--accent);
+  border-style: dashed;
+}
 
 .result-body {
   padding: 11px 13px; background: var(--bg-input);
