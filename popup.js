@@ -421,9 +421,17 @@ function renderManual(card, svc, indicator, isIpAddr) {
   const pasteNeeded = needsManualPaste(svc.key, isIpAddr);
 
   if (pasteNeeded) {
+    // Use a plain href as a fallback for accessibility (right-click "Open in
+    // new tab" still works), but intercept normal clicks: we need to copy to
+    // the clipboard BEFORE the tab opens, otherwise the popup loses focus
+    // and the clipboard write fails silently.
     $status.innerHTML = `<a class="manual-link manual-link-paste" href="${escapeHtml(link)}" target="_blank" rel="noreferrer" title="Indicator copied to clipboard — paste it once the page loads">open + copy ↗</a>`;
-    $status.querySelector("a").addEventListener("click", async () => {
+    $status.querySelector("a").addEventListener("click", async (e) => {
+      // Allow modifier-key opens (Ctrl/Cmd/Shift/middle-click) to behave normally.
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+      e.preventDefault();
       try { await navigator.clipboard.writeText(target); } catch {}
+      chrome.tabs.create({ url: link, active: true });
     });
   } else {
     $status.innerHTML = `<a class="manual-link" href="${escapeHtml(link)}" target="_blank" rel="noreferrer">open ↗</a>`;
